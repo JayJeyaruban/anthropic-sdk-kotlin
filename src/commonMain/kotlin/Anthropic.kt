@@ -302,17 +302,19 @@ class AnthropicConfigException(
     msg, cause
 )
 
-internal fun List<Content>.resolveTools(toolMap: Map<String, Tool>) {
-    filterIsInstance<ToolUse>().forEach { toolUse ->
-        val tool = toolMap[toolUse.name]
-        if (tool != null) {
-            toolUse.tool = tool
-        } else {
-            // Sometimes it happens that Claude is sending non-defined tool name in tool use
-            // TODO in the future it should go to the stderr
-            println("Error!!! Unexpected tool use: ${toolUse.name}")
-        }
+fun ToolUse.resolveTool(toolMap: Map<String, Tool>) {
+    val tool = toolMap[name]
+    if (tool != null) {
+        this.tool = tool
+    } else {
+        // Sometimes it happens that Claude is sending non-defined tool name in tool use
+        // TODO in the future it should go to the stderr
+        println("Error!!! Unexpected tool use: $name")
     }
+}
+
+internal fun List<Content>.resolveTools(toolMap: Map<String, Tool>) {
+    filterIsInstance<ToolUse>().forEach { it.resolveTool(toolMap) }
 }
 
 private val MessageRequest.toolMap: Map<String, Tool> get() = tools?.associateBy { it.name } ?: emptyMap()
